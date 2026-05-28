@@ -122,8 +122,21 @@ const ErrorDebugPopup = () => {
 
   const fire = () => {
     const text = instruction.trim();
-    if (!text) return;
-    const message = `${PREFIX}\n\n${text}`;
+    if (!text && attachments.length === 0) return;
+    let message = `${PREFIX}\n\n${text}`;
+    if (attachments.length > 0) {
+      message += `\n\n--- ARQUIVOS ANEXADOS (${attachments.length}) ---\n`;
+      for (const a of attachments) {
+        message += `\n### ${a.name} (${fmtSize(a.size)}, ${a.type})`;
+        if (a.truncated) message += ` [TRUNCADO em ${MAX_INLINE_BYTES} bytes]`;
+        message += "\n";
+        if (a.binary) {
+          message += `[binário base64 data URL, ${a.content.length} chars]\n${a.content.slice(0, 2000)}${a.content.length > 2000 ? "...[truncado]" : ""}\n`;
+        } else {
+          message += "```\n" + a.content + "\n```\n";
+        }
+      }
+    }
     window.dispatchEvent(new CustomEvent("lovable-debug-error", { detail: message }));
   };
 
@@ -131,6 +144,19 @@ const ErrorDebugPopup = () => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
       fire();
+    }
+  };
+
+  const addFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      const loaded = await Promise.all(Array.from(files).map(readFile));
+      setAttachments((prev) => [...prev, ...loaded]);
+    } catch (err) {
+      console.error("[DebugTool] erro lendo arquivo", err);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -171,7 +197,7 @@ const ErrorDebugPopup = () => {
           userSelect: "none",
         }}
       >
-        <span style={{ fontWeight: 700 }}>🐞 Debug Tool (Admin)</span>
+        <span style={{ fontWeight: 700 }}>🐞 Debug Tool</span>
         <div style={{ display: "flex", gap: 6 }}>
           <button
             onClick={() => setState((s) => ({ ...s, minimized: !s.minimized }))}
@@ -203,18 +229,68 @@ const ErrorDebugPopup = () => {
               fontSize: 12,
               outline: "none",
             }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              addFiles(e.dataTransfer.files);
+            }}
           />
+
+          {attachments.length > 0 && (
+            <div style={{ margin: "0 8px", maxHeight: 90, overflowY: "auto", border: "1px solid #222", borderRadius: 4, padding: 4 }}>
+              {attachments.map((a, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px", fontSize: 11 }}>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    📎 {a.name} <span style={{ opacity: 0.5 }}>({fmtSize(a.size)}){a.truncated ? " ✂" : ""}</span>
+                  </span>
+                  <button
+                    onClick={() => setAttachments((p) => p.filter((_, idx) => idx !== i))}
+                    style={{ ...btn, color: "#ef4444" }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            style={{ display: "none" }}
+            onChange={(e) => {
+              addFiles(e.target.files);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }}
+          />
+
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 8, gap: 8 }}>
-            <span style={{ opacity: 0.6 }}>Dispara erro global intencional</span>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              style={{
+                background: "#1f2937",
+                color: "#fff",
+                border: "1px solid #374151",
+                padding: "6px 10px",
+                borderRadius: 4,
+                cursor: busy ? "wait" : "pointer",
+                fontSize: 11,
+              }}
+            >
+              {busy ? "Lendo..." : "📎 Anexar"}
+            </button>
             <button
               onClick={fire}
+              disabled={busy}
               style={{
                 background: "#ef4444",
                 color: "#fff",
                 border: "none",
                 padding: "6px 12px",
                 borderRadius: 4,
-                cursor: "pointer",
+                cursor: busy ? "wait" : "pointer",
                 fontWeight: 600,
               }}
             >
