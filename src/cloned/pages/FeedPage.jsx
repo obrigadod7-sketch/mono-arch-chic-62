@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../ClonedAuthContext';
 import { Card } from '../components/ui/card';
@@ -317,7 +317,8 @@ const PostCard = ({ post, onChat }) => {
 export default function FeedPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, token } = useContext(AuthContext);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useContext(AuthContext);
 
   const [posts, setPosts] = useState([]);
   const [showBanner, setShowBanner] = useState(true);
@@ -435,7 +436,7 @@ export default function FeedPage() {
     }
   };
 
-  const openModal = (mode) => {
+  const resetCreateModal = (mode) => {
     setModalMode(mode);
     setPostDescription('');
     setPostBudget(mode === 'need' ? 'Sob orçamento' : 'A combinar');
@@ -445,6 +446,30 @@ export default function FeedPage() {
     setSelectedVideos([]);
     setShowCreateModal(true);
   };
+
+  const requireLoginForPublish = (mode = 'need') => {
+    toast.info('Faça login para publicar');
+    setShowCreateModal(false);
+    const nextPath = window.location.pathname || '/home';
+    navigate(`/auth?next=${encodeURIComponent(`${nextPath}?action=publish&mode=${mode}`)}`);
+  };
+
+  const openModal = (mode) => {
+    if (!user) {
+      requireLoginForPublish(mode);
+      return;
+    }
+
+    resetCreateModal(mode);
+  };
+
+  useEffect(() => {
+    if (!user || searchParams.get('action') !== 'publish') return;
+
+    const mode = searchParams.get('mode') === 'offer' ? 'offer' : 'need';
+    resetCreateModal(mode);
+    setSearchParams({}, { replace: true });
+  }, [user, searchParams, setSearchParams]);
 
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files || []);
@@ -570,15 +595,13 @@ export default function FeedPage() {
     }
     setLoadingPost(true);
     try {
-      // Require auth so post is visible to everyone
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        toast.error('Faça login para publicar');
-        setLoadingPost(false);
-        navigate('/servicos/auth');
+      // Require a validated auth user so post is visible to everyone
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        requireLoginForPublish(modalMode);
         return;
       }
-      const uid = session.session.user.id;
+      const uid = authUser.id;
 
       // Upload photos and videos to public storage so other users can see them
       const uploadedUrls = await uploadPhotosToStorage(uid, selectedPhotos);
