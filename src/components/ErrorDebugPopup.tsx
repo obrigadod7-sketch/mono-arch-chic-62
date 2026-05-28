@@ -315,17 +315,25 @@ export const ErrorDebugPopup: React.FC = () => {
           const baseName = sanitizePathSegment(f.name.replace(/\.[^/.]+$/, ""));
           const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${baseName}.${ext}`;
           setUploadProgress(`Enviando ${i + 1}/${files.length}: 0%`);
+          let uploadedToStorage = false;
           if (accessToken) {
-            await uploadLargeFile(f.file, path, accessToken, (percent) => {
-              setUploadProgress(`Enviando ${i + 1}/${files.length}: ${percent}%`);
-            });
-            const url = await createDebugFileUrl(path, accessToken);
-            uploadedUrls.push({ name: f.name, url, type: f.type });
-          } else if (f.file.size <= INLINE_FALLBACK_LIMIT) {
+            try {
+              await uploadLargeFile(f.file, path, accessToken, (percent) => {
+                setUploadProgress(`Enviando ${i + 1}/${files.length}: ${percent}%`);
+              });
+              const url = await createDebugFileUrl(path, accessToken);
+              uploadedUrls.push({ name: f.name, url, type: f.type });
+              uploadedToStorage = true;
+            } catch (uploadError) {
+              if (f.file.size > INLINE_FALLBACK_LIMIT) throw uploadError;
+            }
+          }
+
+          if (!uploadedToStorage && f.file.size <= INLINE_FALLBACK_LIMIT) {
             setUploadProgress(`Anexando ${i + 1}/${files.length} sem sessão...`);
             const url = await readFileAsDataUrl(f.file);
             uploadedUrls.push({ name: f.name, url, type: f.type });
-          } else {
+          } else if (!uploadedToStorage) {
             throw new Error("Sessão indisponível para arquivos grandes. Use um arquivo menor ou faça login novamente.");
           }
         }
