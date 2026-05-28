@@ -454,13 +454,20 @@ export default function FeedPage() {
     navigate(`/auth?next=${encodeURIComponent(`${nextPath}?action=publish&mode=${mode}`)}`);
   };
 
-  const openModal = (mode) => {
-    if (!user) {
-      requireLoginForPublish(mode);
+  const openModal = async (mode) => {
+    if (user) {
+      resetCreateModal(mode);
       return;
     }
-
-    resetCreateModal(mode);
+    // Fallback: AuthContext may not be wired; verify session directly with Supabase.
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        resetCreateModal(mode);
+        return;
+      }
+    } catch (_) {}
+    requireLoginForPublish(mode);
   };
 
   useEffect(() => {
