@@ -436,7 +436,7 @@ export default function FeedPage() {
     }
   };
 
-  const openModal = (mode) => {
+  const resetCreateModal = (mode) => {
     setModalMode(mode);
     setPostDescription('');
     setPostBudget(mode === 'need' ? 'Sob orçamento' : 'A combinar');
@@ -446,6 +446,30 @@ export default function FeedPage() {
     setSelectedVideos([]);
     setShowCreateModal(true);
   };
+
+  const requireLoginForPublish = (mode = 'need') => {
+    toast.info('Faça login para publicar');
+    setShowCreateModal(false);
+    const nextPath = window.location.pathname || '/home';
+    navigate(`/auth?next=${encodeURIComponent(nextPath)}&action=publish&mode=${encodeURIComponent(mode)}`);
+  };
+
+  const openModal = (mode) => {
+    if (!user) {
+      requireLoginForPublish(mode);
+      return;
+    }
+
+    resetCreateModal(mode);
+  };
+
+  useEffect(() => {
+    if (!user || searchParams.get('action') !== 'publish') return;
+
+    const mode = searchParams.get('mode') === 'offer' ? 'offer' : 'need';
+    resetCreateModal(mode);
+    setSearchParams({}, { replace: true });
+  }, [user, searchParams, setSearchParams]);
 
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files || []);
