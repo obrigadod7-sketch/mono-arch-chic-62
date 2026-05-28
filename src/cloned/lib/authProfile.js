@@ -61,6 +61,15 @@ export const getOrCreateSvcProfile = async (authUser, fallback = {}) => {
     return existing;
   }
 
+  const { data: rpcProfile, error: rpcError } = await supabase.rpc('get_or_create_own_svc_profile', {
+    _display_name: defaultProfile.display_name,
+    _avatar_url: defaultProfile.avatar_url,
+    _city: defaultProfile.city || null,
+    _categories: defaultProfile.categories,
+  });
+
+  if (!rpcError && rpcProfile) return rpcProfile;
+
   const { data: created, error: insertError } = await supabase
     .from('svc_profiles')
     .insert({
