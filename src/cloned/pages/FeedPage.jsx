@@ -79,22 +79,36 @@ const saveState = (id, data) => {
 const getActivePublishUser = async (contextUser) => {
   if (contextUser?.id) return contextUser;
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) return session.user;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session.user;
+  } catch (_) {}
 
-  const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-  if (refreshedSession?.user) return refreshedSession.user;
+  try {
+    const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+    if (refreshedSession?.user) return refreshedSession.user;
+  } catch (_) {}
 
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  return authUser || null;
+  try {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    return authUser || null;
+  } catch (_) {
+    return null;
+  }
 };
 
 const getPublishSessionUser = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) return session.user;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session.user;
+  } catch (_) {}
 
-  const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-  return refreshedSession?.user || null;
+  try {
+    const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+    return refreshedSession?.user || null;
+  } catch (_) {
+    return null;
+  }
 };
 
 // Jataí-style PostCard rendering PertoDeMimServicos posts
