@@ -483,11 +483,11 @@ export default function FeedPage() {
     setShowCreateModal(true);
   };
 
-  const publishLocalPost = (uid, uploadedUrls = [], uploadedVideos = []) => {
+  const publishLocalPost = (uid, publishMode = modalMode, uploadedUrls = [], uploadedVideos = []) => {
     const localPost = {
       id: `local-${Date.now()}`,
       user_id: uid,
-      type: modalMode === 'offer' ? 'offer' : 'need',
+      type: publishMode === 'offer' ? 'offer' : 'need',
       category: postCategory === CUSTOM_CATEGORY_VALUE ? (customPostCategory.trim() || 'outros') : postCategory,
       title: postDescription.slice(0, 60),
       description: postDescription,
@@ -664,7 +664,8 @@ export default function FeedPage() {
   };
 
 
-  const handlePostSubmit = async () => {
+  const handlePostSubmit = async (modeOverride) => {
+    const publishMode = modeOverride || modalMode;
     if (!postDescription.trim()) {
       toast.error('Adicione uma descrição');
       return;
@@ -679,7 +680,7 @@ export default function FeedPage() {
       const authUser = await getPublishSessionUser();
       const activeUser = authUser || await getActivePublishUser(user);
       if (!activeUser) {
-        requireLoginForPublish(modalMode);
+        requireLoginForPublish(publishMode);
         return;
       }
       const uid = activeUser.id || `local-user-${Date.now()}`;
@@ -707,13 +708,13 @@ export default function FeedPage() {
         address: postAddress || null,
         lat: postCoords?.lat ?? null,
         lng: postCoords?.lng ?? null,
-        post_type: modalMode === 'offer' ? 'volunteer' : 'paid',
+        post_type: publishMode === 'offer' ? 'volunteer' : 'paid',
         status: 'open',
       };
 
       if (!authUser) {
-        publishLocalPost(uid, uploadedUrls, uploadedVideos);
-        toast.success(modalMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+        publishLocalPost(uid, publishMode, uploadedUrls, uploadedVideos);
+        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
         clearPublishForm();
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
@@ -722,14 +723,14 @@ export default function FeedPage() {
       const { error } = await supabase.from('svc_posts').insert(insertPayload);
       if (error) {
         console.error('svc_posts insert failed', error);
-        publishLocalPost(uid, uploadedUrls, uploadedVideos);
-        toast.success(modalMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+        publishLocalPost(uid, publishMode, uploadedUrls, uploadedVideos);
+        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
         clearPublishForm();
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
-      toast.success(modalMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+      toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
       clearPublishForm();
       await fetchPosts();
       window.scrollTo({ top: 0, behavior: 'smooth' });
