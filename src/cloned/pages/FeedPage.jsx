@@ -449,7 +449,8 @@ export default function FeedPage() {
           avatar: profMap[p.user_id]?.avatar_url,
         },
       }));
-      setPosts(remote.length ? remote : PREVIEW_POSTS);
+      const local = loadLocalPosts();
+      setPosts(local.length ? [...local, ...(remote.length ? remote : PREVIEW_POSTS)] : (remote.length ? remote : PREVIEW_POSTS));
     } catch (e) {
       console.error('Failed to fetch posts', e);
       const local = loadLocalPosts();
@@ -466,6 +467,29 @@ export default function FeedPage() {
     setSelectedPhotos([]);
     setSelectedVideos([]);
     setShowCreateModal(true);
+  };
+
+  const publishLocalPost = (uid, uploadedUrls = [], uploadedVideos = []) => {
+    const localPost = {
+      id: `local-${Date.now()}`,
+      user_id: uid,
+      type: modalMode === 'offer' ? 'offer' : 'need',
+      category: postCategory === CUSTOM_CATEGORY_VALUE ? (customPostCategory.trim() || 'outros') : postCategory,
+      title: postDescription.slice(0, 60),
+      description: postDescription,
+      images: uploadedUrls.length ? uploadedUrls : selectedPhotos.map((photo) => photo.dataUrl).filter(Boolean),
+      videos: uploadedVideos.length ? uploadedVideos : selectedVideos.map((video) => video.dataUrl).filter(Boolean),
+      budget: postBudget || null,
+      likes_count: 0,
+      comments_count: 0,
+      created_at: new Date().toISOString(),
+      location: { address: postAddress || 'Jataí, Goiás', city: 'Jataí', lat: postCoords?.lat, lng: postCoords?.lng },
+      user: { name: user?.name || user?.display_name || 'Você', avatar: userAvatar },
+    };
+    const nextLocalPosts = [localPost, ...loadLocalPosts()];
+    saveLocalPosts(nextLocalPosts);
+    setPosts((prev) => [localPost, ...prev]);
+    return localPost;
   };
 
   const requireLoginForPublish = (mode = 'need') => {
