@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
+const DEFAULT_BROWSER_KEY = 'AIzaSyC1rsLAluPX1QVAdblELEVf1rFcOXde3DU';
+
 const getGoogleMapsBrowserKey = () => {
   const key =
     import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ||
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY ||
-    '';
+    DEFAULT_BROWSER_KEY;
   return key && key !== 'undefined' && key !== 'null' ? key : '';
 };
 
