@@ -471,11 +471,22 @@ export default function FeedPage() {
   };
 
   useEffect(() => {
-    if (!user || searchParams.get('action') !== 'publish') return;
-
-    const mode = searchParams.get('mode') === 'offer' ? 'offer' : 'need';
-    resetCreateModal(mode);
-    setSearchParams({}, { replace: true });
+    if (searchParams.get('action') !== 'publish') return;
+    let cancelled = false;
+    (async () => {
+      let isAuthed = Boolean(user);
+      if (!isAuthed) {
+        try {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          isAuthed = Boolean(authUser);
+        } catch (_) {}
+      }
+      if (cancelled || !isAuthed) return;
+      const mode = searchParams.get('mode') === 'offer' ? 'offer' : 'need';
+      resetCreateModal(mode);
+      setSearchParams({}, { replace: true });
+    })();
+    return () => { cancelled = true; };
   }, [user, searchParams, setSearchParams]);
 
   const handlePhotoSelect = (e) => {
