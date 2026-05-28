@@ -1017,7 +1017,7 @@ export default function FeedPage() {
               </div>
 
               <Button
-                onClick={handlePostSubmit}
+                onClick={() => handlePostSubmit('need')}
                 disabled={loadingPost}
                 className="w-full bg-green-500 hover:bg-green-600 text-white rounded-full h-9 font-semibold shadow-sm text-sm"
                 data-testid="feed-publish-button"
