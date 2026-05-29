@@ -163,16 +163,16 @@ export default function LandingPage() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mt-8">
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">2.000+</p>
-                <p className="text-sm text-gray-600">Vagas ativas</p>
+                <p className="text-3xl font-bold text-primary">10k+</p>
+                <p className="text-sm text-gray-600">Serviços conectados</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">800+</p>
-                <p className="text-sm text-gray-600">Empresas parceiras</p>
+                <p className="text-3xl font-bold text-primary">2.500+</p>
+                <p className="text-sm text-gray-600">Voluntários ativos</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">246</p>
-                <p className="text-sm text-gray-600">Municípios goianos</p>
+                <p className="text-3xl font-bold text-primary">30+</p>
+                <p className="text-sm text-gray-600">Países conectados</p>
               </div>
             </div>
           </div>
@@ -197,10 +197,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
           <div className="mb-4 md:mb-0">
             <p className="text-primary-foreground text-lg font-medium mb-1">
-              Goiás está contratando. Não fique de fora.
+              Faça parte da maior rede de serviços solidários.
             </p>
             <p className="text-primary-foreground/90 text-sm">
-              Cadastre-se grátis e receba vagas da sua região direto no seu perfil.
+              Cadastre-se grátis e comece a transformar vidas — incluindo a sua.
             </p>
           </div>
           <div className="flex items-center space-x-4">
