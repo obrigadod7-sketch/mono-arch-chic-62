@@ -222,8 +222,6 @@ export const ErrorDebugPopup: React.FC = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  if (hidden) return null;
-
   const onResizeMouseDown = (e: React.MouseEvent) => {
     resizeRef.current = { startX: e.clientX, startY: e.clientY, startW: size.w, startH: size.h };
     e.preventDefault();
@@ -412,6 +410,8 @@ export const ErrorDebugPopup: React.FC = () => {
   };
 
   const totalKb = Math.round(files.reduce((a, f) => a + f.size, 0) / 1024);
+
+  if (hidden) return null;
 
   return (
     <div
