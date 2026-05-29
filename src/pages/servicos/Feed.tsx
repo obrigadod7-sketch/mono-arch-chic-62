@@ -22,6 +22,7 @@ type Post = {
   title: string;
   description: string;
   photos: string[];
+  videos: string[];
   budget_range: string | null;
   category_slug: string | null;
   address: string | null;
@@ -48,6 +49,7 @@ export default function ServicosFeed() {
   const [address, setAddress] = useState('');
   const [postType, setPostType] = useState<'paid' | 'volunteer'>('paid');
   const [files, setFiles] = useState<File[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const loadPosts = useCallback(async () => {
@@ -94,13 +96,24 @@ export default function ServicosFeed() {
 
   const resetForm = () => {
     setTitle(''); setDescription(''); setCategorySlug(''); setBudget('');
-    setAddress(''); setPostType('paid'); setFiles([]);
+    setAddress(''); setPostType('paid'); setFiles([]); setVideoFile(null);
   };
 
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = Array.from(e.target.files ?? []).slice(0, 4 - files.length);
     setFiles((prev) => [...prev, ...list]);
     e.target.value = '';
+  };
+
+  const onPickVideo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 150_000_000) {
+      toast({ title: 'Vídeo muito grande', description: 'Máximo 150MB', variant: 'destructive' });
+      return;
+    }
+    setVideoFile(file);
   };
 
   const submitDemand = async () => {
@@ -120,11 +133,23 @@ export default function ServicosFeed() {
         const { data } = supabase.storage.from('svc-photos').getPublicUrl(path);
         photoUrls.push(data.publicUrl);
       }
+      const videoUrls: string[] = [];
+      if (videoFile) {
+        const ext = (videoFile.name.split('.').pop() ?? 'mp4').toLowerCase();
+        const path = `${userId}/videos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('svc-photos').upload(path, videoFile, {
+          contentType: videoFile.type || 'video/mp4',
+        });
+        if (upErr) throw upErr;
+        const { data } = supabase.storage.from('svc-photos').getPublicUrl(path);
+        videoUrls.push(data.publicUrl);
+      }
       const { error } = await supabase.from('svc_posts').insert({
         user_id: userId,
         title: title.trim(),
         description: description.trim(),
         photos: photoUrls,
+        videos: videoUrls,
         budget_range: budget.trim() || null,
         category_slug: categorySlug || null,
         address: address.trim() || null,
@@ -218,6 +243,13 @@ export default function ServicosFeed() {
                     <div className="grid grid-cols-2 gap-2 mt-3">
                       {p.photos.slice(0, 4).map((url) => (
                         <img key={url} src={url} alt="" className="w-full h-32 object-cover rounded-lg" />
+                      ))}
+                    </div>
+                  )}
+                  {Array.isArray(p.videos) && p.videos.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {p.videos.map((url) => (
+                        <video key={url} src={url} controls playsInline className="w-full rounded-lg max-h-96 bg-black" />
                       ))}
                     </div>
                   )}
@@ -332,6 +364,27 @@ export default function ServicosFeed() {
                   <label className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer text-gray-400 hover:text-green-600 hover:border-green-600">
                     <ImagePlus className="w-6 h-6" />
                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPickFiles} />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label>Vídeo (opcional, até 150MB)</Label>
+              <div className="mt-1">
+                {videoFile ? (
+                  <div className="relative">
+                    <video src={URL.createObjectURL(videoFile)} controls playsInline className="w-full rounded-lg max-h-64 bg-black" />
+                    <button
+                      type="button"
+                      onClick={() => setVideoFile(null)}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1"
+                    ><X className="w-4 h-4" /></button>
+                  </div>
+                ) : (
+                  <label className="block w-full py-3 rounded-lg border-2 border-dashed text-center text-sm text-gray-500 cursor-pointer hover:text-green-600 hover:border-green-600">
+                    Selecionar vídeo
+                    <input type="file" accept="video/*" className="hidden" onChange={onPickVideo} />
                   </label>
                 )}
               </div>
