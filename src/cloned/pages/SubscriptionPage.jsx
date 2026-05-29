@@ -403,9 +403,10 @@ export default function SubscriptionPage() {
             >
               Modificar meu perímetro
             </Button>
+            </>)}
 
-            {/* Custom PIX key for receiving payments */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            {/* Custom PIX key for receiving payments — always visible */}
+            <div className="mt-8 pt-6 border-t border-gray-200" data-testid="custom-pix-section">
               <label className="block text-sm font-semibold text-gray-900 mb-1">
                 Minha chave PIX (área de pagamento)
               </label>
@@ -430,7 +431,6 @@ export default function SubscriptionPage() {
                 {savingPix ? 'Salvando...' : 'Salvar minha chave PIX'}
               </Button>
             </div>
-            </>)}
           </div>
         </main>
 
