@@ -716,7 +716,7 @@ export default function FeedPage() {
       if (!activeUser) {
         const guestId = `guest-${Date.now()}`;
         publishLocalPost(guestId, publishMode);
-        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada neste aparelho!' : 'Seu serviço foi publicado neste aparelho!');
         clearPublishForm();
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
@@ -752,7 +752,7 @@ export default function FeedPage() {
 
       if (!authUser) {
         publishLocalPost(uid, publishMode, uploadedUrls, uploadedVideos);
-        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada neste aparelho!' : 'Seu serviço foi publicado neste aparelho!');
         clearPublishForm();
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
