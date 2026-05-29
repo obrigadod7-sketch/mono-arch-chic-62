@@ -713,20 +713,20 @@ export default function FeedPage() {
       };
 
       if (!authUser) {
-        publishLocalPost(uid, publishMode, uploadedUrls, uploadedVideos);
-        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
-        clearPublishForm();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Sem sessão: não dá para gravar no servidor (RLS exige auth.uid()).
+        // Avisa o usuário em vez de mascarar com armazenamento local.
+        toast.error('Faça login para que sua publicação fique visível a todos.');
         return;
       }
 
-      const { error } = await supabase.from('svc_posts').insert(insertPayload);
-      if (error) {
+      const { data: inserted, error } = await supabase
+        .from('svc_posts')
+        .insert(insertPayload)
+        .select('id')
+        .single();
+      if (error || !inserted?.id) {
         console.error('svc_posts insert failed', error);
-        publishLocalPost(uid, publishMode, uploadedUrls, uploadedVideos);
-        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
-        clearPublishForm();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        toast.error(`Erro ao publicar: ${error?.message || 'tente novamente'}`);
         return;
       }
 
