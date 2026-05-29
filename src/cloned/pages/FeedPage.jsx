@@ -464,7 +464,16 @@ export default function FeedPage() {
         },
       }));
       const local = loadLocalPosts();
-      setPosts(local.length ? [...local, ...(remote.length ? remote : PREVIEW_POSTS)] : (remote.length ? remote : PREVIEW_POSTS));
+      // Remote posts (svc_posts) are public to everyone. Only fall back to
+      // localStorage when there are no remote posts at all — local posts are
+      // visible only on the author's device and should not pollute the feed.
+      if (remote.length) {
+        setPosts(remote);
+      } else if (local.length) {
+        setPosts([...local, ...PREVIEW_POSTS]);
+      } else {
+        setPosts(PREVIEW_POSTS);
+      }
     } catch (e) {
       console.error('Failed to fetch posts', e);
       const local = loadLocalPosts();
