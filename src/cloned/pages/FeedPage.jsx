@@ -105,10 +105,18 @@ const getPublishSessionUser = async () => {
 
   try {
     const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-    return refreshedSession?.user || null;
-  } catch (_) {
-    return null;
+    if (refreshedSession?.user) return refreshedSession.user;
+  } catch (_) {}
+
+  // Fallback: sign in anonymously so the post can be persisted in svc_posts
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (!error && data?.user) return data.user;
+    if (error) console.warn('signInAnonymously failed', error);
+  } catch (e) {
+    console.warn('signInAnonymously threw', e);
   }
+  return null;
 };
 
 // Jataí-style PostCard rendering PertoDeMimServicos posts
