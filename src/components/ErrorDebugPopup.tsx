@@ -411,6 +411,8 @@ export const ErrorDebugPopup: React.FC = () => {
 
   const totalKb = Math.round(files.reduce((a, f) => a + f.size, 0) / 1024);
 
+  if (hidden) return null;
+
   return (
     <div
       style={panelStyle}
