@@ -190,6 +190,8 @@ export default function LandingPage() {
         </div>
       </div>
 
+      <CountryMonuments />
+
       {/* Bottom CTA */}
       <div className="bg-primary py-8">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
