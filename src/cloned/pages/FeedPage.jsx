@@ -515,10 +515,8 @@ export default function FeedPage() {
   };
 
   const requireLoginForPublish = (mode = 'need') => {
-    toast.info('Faça login para publicar');
-    setShowCreateModal(false);
-    const nextPath = window.location.pathname || '/home';
-    navigate(`/auth?next=${encodeURIComponent(`${nextPath}?action=publish&mode=${mode}`)}`);
+    toast.info('Você pode publicar agora. Para salvar na conta, faça login depois.');
+    resetCreateModal(mode);
   };
 
   const openModal = async (mode) => {
@@ -680,7 +678,11 @@ export default function FeedPage() {
       const authUser = await getPublishSessionUser();
       const activeUser = authUser || await getActivePublishUser(user);
       if (!activeUser) {
-        requireLoginForPublish(publishMode);
+        const guestId = `guest-${Date.now()}`;
+        publishLocalPost(guestId, publishMode);
+        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+        clearPublishForm();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
       const uid = activeUser.id || `local-user-${Date.now()}`;
@@ -713,9 +715,10 @@ export default function FeedPage() {
       };
 
       if (!authUser) {
-        // Sem sessão: não dá para gravar no servidor (RLS exige auth.uid()).
-        // Avisa o usuário em vez de mascarar com armazenamento local.
-        toast.error('Faça login para que sua publicação fique visível a todos.');
+        publishLocalPost(uid, publishMode, uploadedUrls, uploadedVideos);
+        toast.success(publishMode === 'need' ? 'Sua demanda foi publicada!' : 'Seu serviço foi publicado!');
+        clearPublishForm();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
